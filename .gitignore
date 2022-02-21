@@ -227,5 +227,6 @@ fabric.properties
 
 
 # Custom ignores
+.idea
 *.zip
 cookie.txt
