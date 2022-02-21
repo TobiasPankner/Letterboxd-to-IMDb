@@ -124,7 +124,7 @@ def main():
     # filter to get only the watched and unrated entries
     rating_uris = [rating['Letterboxd URI'] for rating in ratings]
     watched = list(filter(lambda w: w['Letterboxd URI'] not in rating_uris, watched_unfiltered))
-    print(f"Watched Letterboxd entries: {len(watched)}{'' if args.rating > 0 else ' (ignored)'}\n")
+    print(f"Watched Letterboxd entries: {len(watched)}{'' if args.rating > 0 else ' (ignored, see -r option)'}\n")
 
     if args.rating > 0:
         ratings.extend([dict(w, Rating=args.rating / 2) for w in watched])
