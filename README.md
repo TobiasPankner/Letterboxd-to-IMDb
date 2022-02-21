@@ -13,7 +13,7 @@ Python script to import your Letterboxd movies into IMDb.
   
  - Python3 ([Download](https://www.python.org/downloads/))  
  - [Letterboxd](https://letterboxd.com/) Account
- - [IMDb](https://www.imdb.com/) account
+ - [IMDb](https://www.imdb.com/) Account
  
 ## Run the script
  1. Export your Letterboxd ratings ([How to](https://listy.is/help/how-to-export-letterboxd-watchlists-reviews/))
