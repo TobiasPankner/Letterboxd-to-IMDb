@@ -65,7 +65,7 @@ def rate_on_imdb(imdb_url, rating):
     resp = requests.post("https://api.graphql.imdb.com/", json=req_body, headers=headers)
 
     if resp.status_code != 200:
-        raise ValueError(f"Error rating on IMDb {resp.status_code}")
+        raise ValueError(f"Error rating on IMDb. Code: {resp.status_code}")
 
     json_resp = resp.json()
     if 'errors' in json_resp and len(json_resp['errors']) > 0:
@@ -137,13 +137,17 @@ def main():
             future_to_url = {
                 executor.submit(letterboxd_to_imdb, letterboxd_dict): letterboxd_dict for letterboxd_dict in ratings
             }
-            for future in concurrent.futures.as_completed(future_to_url):
-                letterboxd_dict = future_to_url[future]
-                pbar.update(1)
-                try:
-                    success.append(future.result())
-                except Exception as e:
-                    errors.append({"letterboxd_dict": letterboxd_dict, "error": e})
+            try:
+                for future in concurrent.futures.as_completed(future_to_url):
+                    letterboxd_dict = future_to_url[future]
+                    pbar.update(1)
+                    try:
+                        success.append(future.result())
+                    except Exception as e:
+                        errors.append({"letterboxd_dict": letterboxd_dict, "error": e})
+            except KeyboardInterrupt:
+                executor._threads.clear()
+                concurrent.futures.thread._threads_queues.clear()
 
     print(f"Successfully rated: {len(success)} ")
     print(f"{len(errors)} Errors")
