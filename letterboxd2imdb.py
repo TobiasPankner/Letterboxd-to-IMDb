@@ -35,7 +35,7 @@ def get_imdb_url(letterboxd_uri):
     if resp.status_code != 200:
         return None
 
-    # extract the IMDB url
+    # extract the IMDb url
     re_match = re.findall('href="(.+/maindetails)"', resp.text)
     if not re_match:
         return None
@@ -65,7 +65,7 @@ def rate_on_imdb(imdb_url, rating):
     resp = requests.post("https://api.graphql.imdb.com/", json=req_body, headers=headers)
 
     if resp.status_code != 200:
-        raise ValueError(f"Error rating on IMDB {resp.status_code}")
+        raise ValueError(f"Error rating on IMDb {resp.status_code}")
 
     json_resp = resp.json()
     if 'errors' in json_resp and len(json_resp['errors']) > 0:
@@ -81,14 +81,14 @@ def rate_on_imdb(imdb_url, rating):
 def letterboxd_to_imdb(letterboxd_dict):
     imdb_url = get_imdb_url(letterboxd_dict['Letterboxd URI'])
     if imdb_url is None:
-        raise ValueError("Cannot find IMDB title")
+        raise ValueError("Cannot find IMDb title")
     rate_on_imdb(imdb_url, int(float(letterboxd_dict['Rating']) * 2))
 
 
 def main():
     global imdb_cookie
 
-    parser = ArgumentParser(description="Imports your Letterboxd ratings into IMDB")
+    parser = ArgumentParser(description="Imports your Letterboxd ratings into IMDb")
     optional = parser._action_groups.pop()
     required = parser.add_argument_group('required arguments')
     parser.add_argument_group('optional arguments')
