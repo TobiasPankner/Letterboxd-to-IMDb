@@ -11,7 +11,9 @@ Python script to import your Letterboxd movies into IMDb.
 
 How it works:  
 The script first "visits" all the Letterboxd links in your zip file and gets the corresponding IMDb page. This way, it can be ensured the correct movie is rated.  
-After that, your cookie is used to authenticate a request to the internal IMDb GraphQL rating API.
+After that, your cookie is used to authenticate a request to the internal IMDb GraphQL rating API.  
+
+**Video tutorial** on how to use this: https://www.youtube.com/watch?v=KF7cfdUTEgw
 
 ## Prerequisites  
   
