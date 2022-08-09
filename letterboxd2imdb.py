@@ -1,3 +1,4 @@
+import argparse
 import concurrent.futures
 
 import requests
@@ -26,29 +27,26 @@ def read_zip(filename):
             ratings = read_csv(f)
         with letterboxd_file.open("watched.csv", mode='r') as f:
             watched = read_csv(f)
+        with letterboxd_file.open("watchlist.csv", mode='r') as f:
+            watchlist = read_csv(f)
 
-    return ratings, watched
+    return ratings, watched, watchlist
 
 
-def get_imdb_url(letterboxd_uri):
+def get_imdb_id(letterboxd_uri):
     resp = requests.get(letterboxd_uri)
     if resp.status_code != 200:
         return None
 
     # extract the IMDb url
-    re_match = re.findall('href="(.+/maindetails)"', resp.text)
+    re_match = re.findall(r'href=".+title/(tt\d+)/maindetails"', resp.text)
     if not re_match:
         return None
 
     return re_match[0]
 
 
-def rate_on_imdb(imdb_url, rating):
-    re_match = re.findall('title/(.+)/maindetails', imdb_url)
-    if not re_match:
-        return None
-
-    imdb_id = re_match[0]
+def rate_on_imdb(imdb_id, rating):
     req_body = {
         "query": "mutation UpdateTitleRating($rating: Int!, $titleId: ID!) { rateTitle(input: {rating: $rating, titleId: $titleId}) { rating { value __typename } __typename }}",
         "operationName": "UpdateTitleRating",
@@ -78,17 +76,39 @@ def rate_on_imdb(imdb_url, rating):
             raise ValueError(first_error_msg)
 
 
-def letterboxd_to_imdb(letterboxd_dict):
-    imdb_url = get_imdb_url(letterboxd_dict['Letterboxd URI'])
-    if imdb_url is None:
+def add_to_imdb_watchlist(imdb_id):
+    headers = {
+        "content-type": "application/json",
+        "cookie": imdb_cookie
+    }
+
+    resp = requests.put(f"https://www.imdb.com/watchlist/{imdb_id}", headers=headers)
+
+    if resp.status_code != 200:
+        raise ValueError(f"Error adding to IMDb watchlist. Code: {resp.status_code}")
+
+    if resp.status_code == 403:
+        print(f"Failed to authenticate with cookie")
+        exit(1)
+
+
+def rate_letterboxd_to_imdb(letterboxd_dict):
+    imdb_id = get_imdb_id(letterboxd_dict['Letterboxd URI'])
+    if imdb_id is None:
         raise ValueError("Cannot find IMDb title")
-    rate_on_imdb(imdb_url, int(float(letterboxd_dict['Rating']) * 2))
+
+    if letterboxd_dict['Action'] == "rate":
+        rate_on_imdb(imdb_id, int(float(letterboxd_dict['Rating']) * 2))
+    elif letterboxd_dict['Action'] == "watchlist":
+        add_to_imdb_watchlist(imdb_id)
+
+    return letterboxd_dict
 
 
 def main():
     global imdb_cookie
 
-    parser = ArgumentParser(description="Imports your Letterboxd ratings into IMDb")
+    parser = ArgumentParser(description="Imports your Letterboxd ratings and watchlist into IMDb")
     optional = parser._action_groups.pop()
     required = parser.add_argument_group('required arguments')
     parser.add_argument_group('optional arguments')
@@ -98,6 +118,8 @@ def main():
                           help="Urls to be processed in parallel (valid: 1 to 20)")
     optional.add_argument("-r", dest="rating", type=int, default=0,
                           help="The rating to give watched but unrated movies. By default they are ignored (valid: 1 to 10)")
+    optional.add_argument("-w", dest="watchlist", action=argparse.BooleanOptionalAction,
+                          help="Add this flag to also transfer your watchlist")
     parser._action_groups.append(optional)
 
     args = parser.parse_args()
@@ -117,25 +139,31 @@ def main():
         print("Failed to read cookie.txt, have you created the file?")
         exit(1)
 
-    ratings, watched_unfiltered = read_zip(args.zipfile)
+    ratings, watched_unfiltered, watchlist = read_zip(args.zipfile)
 
-    print(f"Rated Letterboxd entries: {len(ratings)}")
+    to_transfer = []
+
+    print(f"Letterboxd rated: {len(ratings)}")
+    to_transfer.extend([dict(w, Action="rate") for w in ratings])
 
     # filter to get only the watched and unrated entries
     rating_uris = [rating['Letterboxd URI'] for rating in ratings]
     watched = list(filter(lambda w: w['Letterboxd URI'] not in rating_uris, watched_unfiltered))
-    print(f"Watched Letterboxd entries: {len(watched)}{'' if args.rating > 0 else ' (ignored, see -r option)'}\n")
-
+    print(f"Letterboxd watched: {len(watched)}{'' if args.rating > 0 else ' (ignored, see -r option)'}")
     if args.rating > 0:
-        ratings.extend([dict(w, Rating=args.rating / 2) for w in watched])
+        to_transfer.extend([dict(w, Rating=args.rating / 2, Action="rate") for w in watched])
+
+    print(f"Letterboxd watchlist: {len(watchlist)}{'' if args.watchlist else ' (ignored, see -w option)'}\n")
+    if args.watchlist:
+        to_transfer.extend([dict(w, Action="watchlist") for w in watchlist])
 
     success = []
     errors = []
 
-    with tqdm(total=len(ratings)) as pbar:
+    with tqdm(total=len(to_transfer)) as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as executor:
             future_to_url = {
-                executor.submit(letterboxd_to_imdb, letterboxd_dict): letterboxd_dict for letterboxd_dict in ratings
+                executor.submit(rate_letterboxd_to_imdb, letterboxd_dict): letterboxd_dict for letterboxd_dict in to_transfer
             }
             try:
                 for future in concurrent.futures.as_completed(future_to_url):
@@ -149,9 +177,18 @@ def main():
                 executor._threads.clear()
                 concurrent.futures.thread._threads_queues.clear()
 
-    print(f"Successfully rated: {len(success)} ")
-    print(f"{len(errors)} Errors")
-    for error in errors:
+    ratings_success = [s for s in success if s['Action'] == 'rate']
+    watchlist_success = [s for s in success if s['Action'] == 'watchlist']
+    print(f"\nSuccessfully rated: {len(ratings_success)} ")
+    print(f"Successfully added to watchlist: {len(watchlist_success)} ")
+
+    ratings_error = [e for e in errors if e['letterboxd_dict']['Action'] == 'rate']
+    watchlist_error = [e for e in errors if e['letterboxd_dict']['Action'] == 'watchlist']
+    print(f"{len(ratings_error)} rating errors")
+    for error in ratings_error:
+        print(f"\t{error['letterboxd_dict']['Name']} ({error['letterboxd_dict']['Year']}): {error['error']}")
+    print(f"{len(watchlist_error)} watchlist errors")
+    for error in watchlist_error:
         print(f"\t{error['letterboxd_dict']['Name']} ({error['letterboxd_dict']['Year']}): {error['error']}")
 
 

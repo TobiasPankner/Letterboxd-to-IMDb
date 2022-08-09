@@ -16,7 +16,7 @@ Python script to import your Letterboxd movies into IMDb.
  - [IMDb](https://www.imdb.com/) account
  
 ## Run the script
- 1. Export your Letterboxd ratings ([How to](https://listy.is/help/how-to-export-letterboxd-watchlists-reviews/))
+ 1. Export your Letterboxd ratings and watchlist ([How to](https://listy.is/help/how-to-export-letterboxd-watchlists-reviews/))
  2. [Get the IMDb cookie](#getting-the-imdb-cookie) and save it as "cookie.txt" in the script folder
  2. Install dependencies: `pip install -r requirements.txt`
  3. Run letterboxd2imdb.py: `python letterboxd2imdb.py -f <YOUR ZIP FILE>.zip`
@@ -34,22 +34,28 @@ Python script to import your Letterboxd movies into IMDb.
  
 ## Command line options
 ```
-usage: letterboxd2imdb.py [-h] -f ZIPFILE [-p PARALLEL] [-r RATING]
+usage: letterboxd2imdb.py [-h] -f ZIPFILE [-p PARALLEL] [-r RATING] [-w]
 
-Imports your Letterboxd ratings into IMDb
+Imports your Letterboxd ratings and watchlist into IMDb
 
 required arguments:
   -f ZIPFILE   The exported zip file from letterboxd
 
-optional arguments:
+options:
   -h, --help   show this help message and exit
   -p PARALLEL  Urls to be processed in parallel (valid: 1 to 20)
   -r RATING    The rating to give watched but unrated movies. By default they are ignored (valid: 1 to 10)
+  -w           Add this flag to also transfer your watchlist
 ```
 
 `-p`: Can be used if you want to speed up the process, if you set it too high you might get rate limited. Default: 5  
-`-r`: Can be used to rate watched but unrated movies. Because IMDb doesn't have an option to "just watch", a default rating has to be specified
+`-r`: Can be used to rate watched but unrated movies. Because IMDb doesn't have an option to "just watch", a default rating has to be specified  
+`-w`: Used to transfer your watchlist
+
+Watchlist example:
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -w`
 
 Advanced usage example:
 `py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 10 -r 5`
+
 
