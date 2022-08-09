@@ -7,13 +7,19 @@
 - [Getting the IMDb cookie](#getting-the-imdb-cookie)
 - [Command line options](#command-line-options)
 
-Python script to import your Letterboxd movies into IMDb.
+Python script to import your Letterboxd movies into IMDb.  
+
+How it works:  
+The script first "visits" all the Letterboxd links in your zip file and gets the corresponding IMDb page. This way, it can be ensured the correct movie is rated.  
+After that, your cookie is used to authenticate a request to the internal IMDb GraphQL rating API.  
+
+**Video tutorial** on how to use this: https://www.youtube.com/watch?v=KF7cfdUTEgw
 
 ## Prerequisites  
   
  - Python3 ([Download](https://www.python.org/downloads/))  
  - [Letterboxd](https://letterboxd.com/) Account
- - [IMDb](https://www.imdb.com/) account
+ - [IMDb](https://www.imdb.com/) Account
  
 ## Run the script
  1. Export your Letterboxd ratings and watchlist ([How to](https://listy.is/help/how-to-export-letterboxd-watchlists-reviews/))
