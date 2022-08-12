@@ -1,5 +1,7 @@
 import argparse
 import concurrent.futures
+import hashlib
+import json
 
 import requests
 from argparse import ArgumentParser
@@ -10,6 +12,29 @@ from io import TextIOWrapper
 from tqdm import tqdm
 
 imdb_cookie = ""
+
+
+class RateLimitError(Exception):
+    pass
+
+
+def files_hash(files):
+    block_size = 65536
+    hasher = hashlib.md5()
+    for file in files:
+        with open(file, 'rb') as afile:
+            buf = afile.read(block_size)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = afile.read(block_size)
+    return hasher.hexdigest()
+
+
+def dict_hash(dictionary):
+    dhash = hashlib.md5()
+    encoded = json.dumps(dictionary, sort_keys=True).encode()
+    dhash.update(encoded)
+    return dhash.hexdigest()
 
 
 def read_csv(file):
@@ -63,6 +88,8 @@ def rate_on_imdb(imdb_id, rating):
     resp = requests.post("https://api.graphql.imdb.com/", json=req_body, headers=headers)
 
     if resp.status_code != 200:
+        if resp.status_code == 429:
+            raise RateLimitError("IMDb Rate limit exceeded")
         raise ValueError(f"Error rating on IMDb. Code: {resp.status_code}")
 
     json_resp = resp.json()
@@ -85,6 +112,8 @@ def add_to_imdb_watchlist(imdb_id):
     resp = requests.put(f"https://www.imdb.com/watchlist/{imdb_id}", headers=headers)
 
     if resp.status_code != 200:
+        if resp.status_code == 429:
+            raise RateLimitError("IMDb Rate limit exceeded")
         raise ValueError(f"Error adding to IMDb watchlist. Code: {resp.status_code}")
 
     if resp.status_code == 403:
@@ -116,6 +145,8 @@ def main():
                           help="The exported zip file from letterboxd")
     optional.add_argument("-p", dest="parallel", type=int, default=5,
                           help="Urls to be processed in parallel (valid: 1 to 20)")
+    optional.add_argument("-c", dest="clean", action=argparse.BooleanOptionalAction,
+                          help="Add this flag to disable the history")
     optional.add_argument("-r", dest="rating", type=int, default=0,
                           help="The rating to give watched but unrated movies. By default they are ignored (valid: 1 to 10)")
     optional.add_argument("-w", dest="watchlist", action=argparse.BooleanOptionalAction,
@@ -139,6 +170,15 @@ def main():
         print("Failed to read cookie.txt, have you created the file?")
         exit(1)
 
+    current_files_hash = files_hash(['cookie.txt', args.zipfile])
+    prev_hashes = set()
+    if not args.clean:
+        try:
+            with open(f'history/{current_files_hash}.txt', 'r') as f:
+                prev_hashes = set(f.read().strip().split("\n"))
+        except Exception:
+            pass
+
     ratings, watched_unfiltered, watchlist = read_zip(args.zipfile)
 
     to_transfer = []
@@ -157,13 +197,16 @@ def main():
     if args.watchlist:
         to_transfer.extend([dict(w, Action="watchlist") for w in watchlist])
 
+    to_transfer = list(filter(lambda d: dict_hash(d) not in prev_hashes, to_transfer))
+
     success = []
     errors = []
 
-    with tqdm(total=len(to_transfer)) as pbar:
+    with tqdm(total=len(to_transfer), leave=False) as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as executor:
             future_to_url = {
-                executor.submit(rate_letterboxd_to_imdb, letterboxd_dict): letterboxd_dict for letterboxd_dict in to_transfer
+                executor.submit(rate_letterboxd_to_imdb, letterboxd_dict): letterboxd_dict for letterboxd_dict in
+                to_transfer
             }
             try:
                 for future in concurrent.futures.as_completed(future_to_url):
@@ -171,11 +214,20 @@ def main():
                     pbar.update(1)
                     try:
                         success.append(future.result())
+                    except RateLimitError:
+                        print("\n\nIMDb rate limit exceeded, try again in a few minutes")
+                        raise
                     except Exception as e:
                         errors.append({"letterboxd_dict": letterboxd_dict, "error": e})
             except KeyboardInterrupt:
-                executor._threads.clear()
-                concurrent.futures.thread._threads_queues.clear()
+                executor.shutdown(wait=True, cancel_futures=True)
+            except RateLimitError:
+                executor.shutdown(wait=True, cancel_futures=True)
+                exit(1)
+            finally:
+                if not args.clean:
+                    with open(f'history/{current_files_hash}.txt', 'a') as f:
+                        f.write('\n' + '\n'.join([dict_hash(s) for s in success]))
 
     ratings_success = [s for s in success if s['Action'] == 'rate']
     watchlist_success = [s for s in success if s['Action'] == 'watchlist']
