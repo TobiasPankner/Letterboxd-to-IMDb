@@ -42,7 +42,7 @@ After that, your cookie is used to authenticate a request to the internal IMDb G
   ![Example](https://imgur.com/chRo9wj.jpg)  
 
 ## Common use cases
-**Transfer the watchlist:**  
+**Transfer your ratings and watchlist:**  
 `py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -w`
 
 **Transfer your watched movies with a rating of 5/10:**  
@@ -68,7 +68,7 @@ options:
 `-p`: Can be used if you want to speed up the process, if you set it too high you might get rate limited. Default: 5  
 `-c`: If the history is causing problems, you can add this flag to disable it.  
 `-r`: Can be used to rate watched but unrated movies. Because IMDb doesn't have an option to "just watch", a default rating has to be specified  
-`-w`: Used to transfer your watchlist
+`-w`: Used to also transfer your watchlist
 
 Advanced usage example:
 `py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 10 -r 5 -w `

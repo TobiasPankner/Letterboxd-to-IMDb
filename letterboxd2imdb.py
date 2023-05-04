@@ -164,7 +164,7 @@ def main():
 """)
 
     try:
-        with open('cookie.txt', 'r') as file:
+        with open('cookie.txt', 'r', encoding='latin-1') as file:
             imdb_cookie = file.read().replace('\n', '').strip()
     except:
         print("Failed to read cookie.txt, have you created the file?")
