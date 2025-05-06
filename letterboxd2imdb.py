@@ -59,7 +59,15 @@ def read_zip(filename):
 
 
 def get_imdb_id(letterboxd_uri):
-    resp = requests.get(letterboxd_uri)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        "Accept": "text/html",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Connection": "keep-alive",
+        "Cache-Control": "max-age=0",
+    }
+
+    resp = requests.get(letterboxd_uri, headers=headers)
     if resp.status_code != 200:
         return None
 
@@ -187,7 +195,7 @@ def main():
     to_transfer.extend([dict(w, Action="rate") for w in ratings])
 
     # filter to get only the watched and unrated entries
-    rating_uris = [rating['Letterboxd URI'] for rating in ratings]
+    rating_uris = [rating['Letterboxd URI'] for rating in ratings if 'Letterboxd URI' in rating]
     watched = list(filter(lambda w: w['Letterboxd URI'] not in rating_uris, watched_unfiltered))
     print(f"Letterboxd watched: {len(watched)}{'' if args.rating > 0 else ' (ignored, see -r option)'}")
     if args.rating > 0:
