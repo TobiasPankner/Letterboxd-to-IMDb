@@ -2,10 +2,12 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import os
 import requests
 from argparse import ArgumentParser
 import csv
 import re
+import time
 from zipfile import ZipFile
 from io import TextIOWrapper
 from tqdm import tqdm
@@ -133,7 +135,6 @@ def add_to_imdb_watchlist(imdb_id):
 
 def create_imdb_list(list_name, description=""):
     """Create a new IMDb list and return the list ID"""
-
     req_body = {
         "query": "mutation CreateList($input: CreateListInput!) { createList(input: $input) { listId __typename } }",
         "operationName": "CreateList",
@@ -216,6 +217,130 @@ def add_to_imdb_list(imdb_id, list_id):
             exit(1)
         else:
             raise ValueError(first_error_msg)
+
+
+def get_user_lists_from_profile():
+    """Get user lists by parsing the main IMDb profile page"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cookie": imdb_cookie,
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
+    }
+
+    # Try to access the main IMDb page first to see if we're logged in
+    url = "https://www.imdb.com/profile"
+    user_id = None
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+
+        if resp.status_code == 200:
+            content = resp.text
+
+            # Look for user ID pattern in the HTML
+            matches = re.findall(r'/user/(ur\d+)/', content)
+            if matches:
+                user_id = matches[0]
+
+            # Also look for any list references in the main page
+            pattern = r'href="/list/(ls\d+)"[^>]*>([^<]+)</a>'
+            lists_dict = {}
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            for match in matches:
+                list_id, list_name = match
+                clean_name = list_name.strip()
+                clean_name = re.sub(r'&[a-zA-Z0-9#]+;', '', clean_name)
+                clean_name = re.sub(r'\s+', ' ', clean_name).strip()
+
+                if clean_name and list_id.startswith('ls'):
+                    lists_dict[clean_name] = list_id
+
+            if lists_dict:
+                return lists_dict
+
+    except Exception as e:
+        pass
+
+    # If we found a user ID, try to access their lists page directly
+    if user_id:
+        list_urls = [
+            f"https://www.imdb.com/user/{user_id}/lists/",
+            f"https://www.imdb.com/user/{user_id}/",
+        ]
+
+        for url in list_urls:
+            try:
+                resp = requests.get(url, headers=headers, timeout=10)
+
+                if resp.status_code == 200:
+                    content = resp.text
+
+                    # Look for lists using the working pattern
+                    pattern = r'href="/list/(ls\d+)/?[^"]*"[^>]*>([^<]+)</a>'
+                    lists_dict = {}
+
+                    try:
+                        matches = re.findall(pattern, content, re.IGNORECASE)
+
+                        for match in matches:
+                            list_id, list_name = match
+
+                            # Clean up the list name
+                            clean_name = list_name.strip()
+                            clean_name = re.sub(
+                                r'&[a-zA-Z0-9#]+;', '', clean_name)
+                            clean_name = re.sub(
+                                r'\s+', ' ', clean_name).strip()
+                            # Remove HTML tags
+                            clean_name = re.sub(r'<[^>]+>', '', clean_name)
+
+                            if clean_name and list_id and list_id.startswith('ls') and len(list_id) > 2:
+                                lists_dict[clean_name] = list_id
+
+                    except Exception as e:
+                        pass
+
+                    if lists_dict:
+                        return lists_dict
+
+            except Exception as e:
+                continue
+
+    return {}
+
+
+def find_or_create_imdb_list(list_name, description=""):
+    """Find an existing list by name or create a new one if it doesn't exist"""
+    try:
+        existing_lists = get_user_lists_from_profile()
+
+        if existing_lists:
+            # Check if our target list exists
+            if list_name in existing_lists:
+                list_id = existing_lists[list_name]
+                return list_id
+
+            # Check for similar named lists (case insensitive, partial match)
+            similar_lists = []
+            for existing_name in existing_lists.keys():
+                if (list_name.lower() in existing_name.lower() or
+                        existing_name.lower() in list_name.lower()):
+                    similar_lists.append(
+                        (existing_name, existing_lists[existing_name]))
+
+    except Exception as e:
+        pass
+
+    # If no existing list found, create a new one
+    try:
+        list_id = create_imdb_list(list_name, description)
+        return list_id
+
+    except Exception:
+        raise
 
 
 def rate_letterboxd_to_imdb(letterboxd_dict):
@@ -301,16 +426,16 @@ def main():
     watched = list(
         filter(lambda w: w['Letterboxd URI'] not in rating_uris, watched_unfiltered))
 
-    print(f"Letterboxd not rated: {len(watched)}")
+    print(f"Letterboxd watched (unrated): {len(watched)}")
 
     # Handle unrated watched movies
     if args.create_list and len(watched) > 0:
-        # Create new list (existing list check removed since API doesn't work reliably)
+        # Find existing list or create new one
         try:
-            list_id = create_imdb_list(
+            list_id = find_or_create_imdb_list(
                 args.list_name, "Movies watched on Letterboxd but not rated")
         except Exception as e:
-            print(f"Failed to create IMDb list: {e}")
+            print(f"Failed to find or create IMDb list: {e}")
             print("Falling back to ignoring unrated movies")
             list_id = None
 
