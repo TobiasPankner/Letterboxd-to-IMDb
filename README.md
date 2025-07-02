@@ -86,45 +86,45 @@ options:
 `--list-name`: Specifies a custom name for the IMDb list created with the `-l` option. Default: "Watched on Letterboxd - Unrated"
 
 **Note:** The `-r` and `-l` options are mutually exclusive. You can either assign default ratings to unrated movies (`-r`) or create a list for them (`-l`), but not both.
-
-## Usage Examples
-
-**Basic import (ratings only):**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip`
-*Imports only your rated movies from Letterboxd to IMDb. Unrated movies are ignored.*
-
-**Import ratings and watchlist:**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -w`
-*Transfers both your movie ratings and watchlist from Letterboxd to IMDb.*
-
-**Give default rating to unrated movies:**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -r 7`
-*Imports your ratings and gives a default rating of 7/10 to all watched but unrated movies.*
-
-**Create a list for unrated movies:**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -l`
-*Creates an IMDb list called "Watched on Letterboxd - Unrated" for movies you've watched but haven't rated.*
-
-**Create a custom-named list for unrated movies:**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -l --list-name "My Letterboxd Backlog"`
-*Creates an IMDb list with a custom name for your unrated watched movies.*
-
-**Fast processing with higher parallelization:**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 15`
-*Processes 15 movies in parallel for faster execution (be careful with rate limiting).*
-
-**Complete transfer with custom settings:**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 10 -r 5 -w`
-*Fast processing (10 parallel), imports ratings and watchlist, gives 5/10 rating to unrated movies.*
-
-**Create a custom list with watchlist and fast processing:**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 10 -l --list-name "My Letterboxd Movies" -w`
-*Processes quickly, imports watchlist, and creates a custom-named list for unrated movies.*
-
-**Disable history (troubleshooting):**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -c`
-*Runs without using the history feature, useful if you're experiencing issues with the history file.*
-
-**Conservative approach (slow but safe):**
-`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 1 -w`
+  
+## Usage Examples  
+  
+**Basic import (ratings only):**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip`  
+*Imports only your rated movies from Letterboxd to IMDb. Unrated movies are ignored.*  
+  
+**Import ratings and watchlist:**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -w`  
+*Transfers both your movie ratings and watchlist from Letterboxd to IMDb.*  
+  
+**Give default rating to unrated movies:**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -r 7`  
+*Imports your ratings and gives a default rating of 7/10 to all watched but unrated movies.*  
+  
+**Create a list for unrated movies:**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -l`  
+*Creates an IMDb list called "Watched on Letterboxd - Unrated" for movies you've watched but haven't rated.*  
+  
+**Create a custom-named list for unrated movies:**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -l --list-name "My Letterboxd Backlog"`  
+*Creates an IMDb list with a custom name for your unrated watched movies.*  
+  
+**Fast processing with higher parallelization:**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 15`  
+*Processes 15 movies in parallel for faster execution (be careful with rate limiting).*  
+  
+**Complete transfer with custom settings:**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 10 -r 5 -w`  
+*Fast processing (10 parallel), imports ratings and watchlist, gives 5/10 rating to unrated movies.*  
+  
+**Create a custom list with watchlist and fast processing:**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 10 -l --list-name "My Letterboxd Movies" -w`  
+*Processes quickly, imports watchlist, and creates a custom-named list for unrated movies.*  
+  
+**Disable history (troubleshooting):**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -c`  
+*Runs without using the history feature, useful if you're experiencing issues with the history file.*  
+  
+**Conservative approach (slow but safe):**  
+`py letterboxd2imdb.py -f .\letterboxd-user-2022-02-20-16-16-utc.zip -p 1 -w`  
 *Processes one movie at a time to avoid any rate limiting issues while importing both ratings and watchlist.*
