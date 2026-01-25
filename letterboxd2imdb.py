@@ -346,7 +346,7 @@ def find_or_create_imdb_list(list_name, description=""):
 def rate_letterboxd_to_imdb(letterboxd_dict):
     imdb_id = get_imdb_id(letterboxd_dict['Letterboxd URI'])
     if imdb_id is None:
-        raise ValueError("Cannot find IMDb title")
+        raise ValueError(f"Cannot find IMDb title ({letterboxd_dict['Letterboxd URI']})")
 
     if letterboxd_dict['Action'] == "rate":
         rate_on_imdb(imdb_id, int(float(letterboxd_dict['Rating']) * 2))
