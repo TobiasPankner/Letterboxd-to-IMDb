@@ -1,3 +1,35 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="center">
+        <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=en">English</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=zh-CN">简体中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=zh-TW">繁體中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=ja">日本語</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=ko">한국어</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=hi">हिन्दी</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=th">ไทย</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=fr">Français</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=de">Deutsch</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=es">Español</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=it">Italiano</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=ru">Русский</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=pt">Português</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=nl">Nederlands</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=pl">Polski</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=ar">العربية</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=fa">فارسی</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=tr">Türkçe</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=vi">Tiếng Việt</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=id">Bahasa Indonesia</a>
+        | <a href="https://openaitx.github.io/view.html?user=TobiasPankner&project=Letterboxd-to-IMDb&lang=as">অসমীয়া</
+      </div>
+    </div>
+  </details>
+</div>
+
 # Letterboxd-to-IMDb
 
 [![GitHub stars](https://img.shields.io/github/stars/TobiasPankner/Letterboxd-to-IMDb.svg?style=social&label=Star)](https://GitHub.com/TobiasPankner/Letterboxd-to-IMDb/stargazers/)
