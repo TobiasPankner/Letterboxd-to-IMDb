@@ -14,6 +14,16 @@ from tqdm import tqdm
 
 imdb_cookie = ""
 
+# Define global headers to ensure consistent browser impersonation across all requests
+BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Origin": "https://www.imdb.com",
+    "Referer": "https://www.imdb.com/",
+    "Connection": "keep-alive"
+}
+
 
 class RateLimitError(Exception):
     pass
@@ -60,15 +70,7 @@ def read_zip(filename):
 
 
 def get_imdb_id(letterboxd_uri):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        "Accept": "text/html",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Connection": "keep-alive",
-        "Cache-Control": "max-age=0",
-    }
-
-    resp = requests.get(letterboxd_uri, headers=headers)
+    resp = requests.get(letterboxd_uri, headers=BROWSER_HEADERS)
     if resp.status_code != 200:
         return None
 
@@ -89,10 +91,15 @@ def rate_on_imdb(imdb_id, rating):
             "titleId": imdb_id
         }
     }
-    headers = {
+    
+    headers = BROWSER_HEADERS.copy()
+    headers.update({
         "content-type": "application/json",
         "cookie": imdb_cookie
-    }
+    })
+
+    # Added anti-spam throttling to stay below AWS firewall triggers
+    time.sleep(0.5)
 
     resp = requests.post("https://api.graphql.imdb.com/",
                          json=req_body, headers=headers)
@@ -114,10 +121,13 @@ def rate_on_imdb(imdb_id, rating):
 
 
 def add_to_imdb_watchlist(imdb_id):
-    headers = {
+    headers = BROWSER_HEADERS.copy()
+    headers.update({
         "content-type": "application/json",
         "cookie": imdb_cookie
-    }
+    })
+
+    time.sleep(0.5)
 
     resp = requests.put(
         f"https://www.imdb.com/watchlist/{imdb_id}", headers=headers)
@@ -149,11 +159,11 @@ def create_imdb_list(list_name, description=""):
         }
     }
 
-    headers = {
+    headers = BROWSER_HEADERS.copy()
+    headers.update({
         "content-type": "application/json",
-        "cookie": imdb_cookie,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-    }
+        "cookie": imdb_cookie
+    })
 
     resp = requests.post("https://api.graphql.imdb.com/",
                          json=req_body, headers=headers)
@@ -192,11 +202,11 @@ def add_to_imdb_list(imdb_id, list_id):
             }
         }
     }
-    headers = {
+    headers = BROWSER_HEADERS.copy()
+    headers.update({
         "content-type": "application/json",
-        "cookie": imdb_cookie,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-    }
+        "cookie": imdb_cookie
+    })
     resp = requests.post("https://api.graphql.imdb.com/",
                          json=req_body, headers=headers)
 
@@ -221,14 +231,11 @@ def add_to_imdb_list(imdb_id, list_id):
 
 def get_user_lists_from_profile():
     """Get user lists by parsing the main IMDb profile page"""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
+    headers = BROWSER_HEADERS.copy()
+    headers.update({
         "Cookie": imdb_cookie,
-        "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1"
-    }
+    })
 
     # Try to access the main IMDb page first to see if we're logged in
     url = "https://www.imdb.com/profile"
@@ -492,6 +499,7 @@ def main():
                 exit(1)
             finally:
                 if not args.clean:
+                    os.makedirs('history', exist_ok=True)
                     with open(f'history/{current_files_hash}.txt', 'a') as f:
                         f.write(
                             '\n' + '\n'.join([dict_hash(s) for s in success]))
